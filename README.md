@@ -46,12 +46,16 @@ coocking-app/
 ```
 ---
 ## 1. Klone das Repository
-git clone https://github.com/dein-user/koch-app.git
+git clone https://github.com/EikAlex/Cocking-App.git
 
 cd koch-app
 
 ## 2. Starte die Anwendung
-docker-compose up --build
+docker-compose up --build 
+
+Beim ersten Start muss der Conainer einmal nach dem Start wieder heruntergefahren (C+ Strg) und dann wieder hochgefahren (docker-compose up --build) werden.
+Da die Website nicht auf die Datenbank wartet und sie diese nicht erreicht.
+
 
 ## 3. Link zur Webapp
 http://localhost:8501/
@@ -61,5 +65,5 @@ docker-compose down
 
 docker volume rm cooking-app_pgdata
 
-
+---
 ### Erstellt von Alexander Schmal für die Abgabe des Mobile Applikationen Moduls 

@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
 from models import Vorrat, Zutat, Rezept, RezeptZutat
-from sqlalchemy.orm import Session
 import streamlit as st
 
 # DB-Konfig aus Umgebungsvariablen
@@ -18,27 +17,10 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-# def add_zutat_to_vorrat(db, name, einheit, menge, haltbar_bis):
-#     # Zutat suchen oder neu anlegen
-#     zutat = db.query(Zutat).filter(Zutat.name == name).first()
-#     if not zutat:
-#         zutat = Zutat(name=name, einheit=einheit)
-#         db.add(zutat)
-#         db.commit()
-#         db.refresh(zutat)
-
-#     # Vorratseintrag anlegen
-#     eintrag = Vorrat(
-#         zutat_id=zutat.id,
-#         menge_vorhanden=menge,
-#         haltbar_bis=haltbar_bis
-#     )
-#     db.add(eintrag)
-#     db.commit()
 def add_zutat_to_vorrat(db, name, einheit, menge, haltbar_bis):
     # Zutat suchen oder neu anlegen
     zutat = db.query(Zutat).filter(Zutat.name == name).first()
-    
+
     if not zutat:
         # Zutat existiert nicht, also anlegen
         zutat = Zutat(name=name, einheit=einheit)
@@ -55,7 +37,8 @@ def add_zutat_to_vorrat(db, name, einheit, menge, haltbar_bis):
         # Wenn Eintrag vorhanden ist, die Menge addieren
         vorratseintrag.menge_vorhanden += menge
         db.commit()  # Änderungen speichern
-        st.success(f"✅ Menge für {name} wurde um {menge} erhöht. Neuer Vorrat: {vorratseintrag.menge_vorhanden} {einheit}.")
+        st.success(
+            f"✅ Menge für {name} wurde um {menge} erhöht. Neuer Vorrat: {vorratseintrag.menge_vorhanden} {einheit}.")
     else:
         # Wenn kein Eintrag vorhanden ist, neuen Vorratseintrag erstellen
         eintrag = Vorrat(
@@ -73,6 +56,16 @@ def delete_vorratseintrag(db, vorrat_id: int):
     if eintrag:
         db.delete(eintrag)
         db.commit()
+
+
+def delete_zutat_from_db(db, zutat_name):
+    """Löscht eine Zutat aus der Datenbank."""
+    zutat = db.query(Zutat).filter(Zutat.name == zutat_name).first()
+    if zutat:
+        db.delete(zutat)
+        db.commit()
+        return True
+    return False
 
 
 def add_rezept(db, name, beschreibung, zutaten_liste):

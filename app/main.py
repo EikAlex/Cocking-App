@@ -3,7 +3,7 @@ from db import SessionLocal, add_zutat_to_vorrat, delete_vorratseintrag, add_rez
 import datetime
 import pandas as pd
 from models import Vorrat, Zutat, Rezept, RezeptZutat
-from util import check_haltbarkeit
+from util import check_haltbarkeit, delete_zutat_from_db
 from sqlalchemy.orm import joinedload
 
 st.set_page_config(page_title="Koch mit mir!", layout="wide")
@@ -17,25 +17,56 @@ tab1, tab2, tab3 = st.tabs(["📦 Vorrat", "📖 Rezepte", "🧠 Vorschläge"])
 
 # 🔹 UI für Vorratspeicherung in main.py
 with tab1:
-    st.subheader("📥 Vorrat hinzufügen")
+    st.subheader("📥 Vorrat verwalten")
 
-    with st.form("vorrat_form"):
-        name = st.text_input("Zutat", placeholder="z. B. Tomaten")
-        einheit = st.selectbox("Einheit", ["g", "ml", "Stück"])
-        menge = st.number_input("Menge", min_value=0.0, step=0.1)
-        haltbar_bis = st.date_input("Haltbar bis", value=datetime.date.today())
+    # Auswahl zwischen Hinzufügen und Löschen
+    action = st.radio("Wähle eine Aktion", ("Zutat hinzufügen", "Zutat löschen"))
 
-        submitted = st.form_submit_button("Hinzufügen")
-        if submitted:
-            db = SessionLocal()
-            try:
-                add_zutat_to_vorrat(
-                    db, name.strip().capitalize(), einheit, menge, haltbar_bis)
-                st.success(f"✅ {name} wurde zum Vorrat hinzugefügt!")
-            except Exception as e:
-                st.error(f"❌ Fehler beim Hinzufügen: {e}")
-            finally:
-                db.close()
+    db = SessionLocal()
+
+    if action == "Zutat hinzufügen":
+        # Zutat hinzufügen
+        with st.form("vorrat_form"):
+            # Holen von bereits vorhandenen Zutaten aus der DB (diese werden als Vorschläge angezeigt)
+            vorhandene_zutaten = db.query(Zutat.name).all()
+            zutaten_liste = [z[0] for z in vorhandene_zutaten]  # Extrahieren der Namen
+
+            # Textinput mit Autocomplete
+            name = st.selectbox("Zutat", zutaten_liste, index=0, key="autocomplete_zutat")
+
+            # Einheit und Menge
+            einheit = st.selectbox("Einheit", ["g", "ml", "Stück"])
+            menge = st.number_input("Menge", min_value=0.0, step=0.1)
+            haltbar_bis = st.date_input("Haltbar bis", value=datetime.date.today())
+
+            submitted = st.form_submit_button("Hinzufügen")
+            if submitted:
+                if name not in zutaten_liste:  # Duplikate verhindern
+                    try:
+                        add_zutat_to_vorrat(
+                            db, name.strip().capitalize(), einheit, menge, haltbar_bis)
+                        st.success(f"✅ {name} wurde zum Vorrat hinzugefügt!")
+                    except Exception as e:
+                        st.error(f"❌ Fehler beim Hinzufügen: {e}")
+                else:
+                    st.warning("Die Zutat existiert bereits im Vorrat!")
+
+    elif action == "Zutat löschen":
+        # Zutat löschen
+        st.subheader("🗑️ Zutat löschen")
+
+        # Zutat zum Löschen auswählen
+        zutaten_liste = [z[0] for z in db.query(Zutat.name).all()]
+        zutat_to_delete = st.selectbox("Wähle eine Zutat zum Löschen", zutaten_liste)
+
+        if zutat_to_delete:
+            if st.button(f"❌ {zutat_to_delete} löschen"):
+                if delete_zutat_from_db(db, zutat_to_delete):
+                    st.success(f"✅ Zutat '{zutat_to_delete}' wurde gelöscht!")
+                else:
+                    st.error(f"❌ Fehler: Zutat '{zutat_to_delete}' konnte nicht gelöscht werden.")
+
+    db.close()
 
     st.divider()
 
@@ -45,16 +76,6 @@ with tab1:
     try:
         eintraege = db.query(Vorrat).options(joinedload(Vorrat.zutat)).all()
         if eintraege:
-            ## Tabelle anzeigen alternatiive
-            # daten = [{
-            #     "Zutat": e.zutat.name,
-            #     "Einheit": e.zutat.einheit,
-            #     "Menge": e.menge_vorhanden,
-            #     "Haltbar bis": e.haltbar_bis
-            # } for e in eintraege]
-            # df = pd.DataFrame(daten)
-            # st.table(df)
-
             # Interaktive Liste mit Löschfunktion
             for eintrag in eintraege:
                 col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 2, 1])
@@ -63,7 +84,6 @@ with tab1:
                 col3.write(eintrag.zutat.einheit)
                 haltbarkeit_html = check_haltbarkeit(eintrag.haltbar_bis)
                 col4.markdown(haltbarkeit_html, unsafe_allow_html=True)
-                # col4.write("📅 " + eintrag.haltbar_bis.strftime("%d.%m.%Y"))
                 if col5.button("🗑️ Löschen", key=f"delete_{eintrag.id}"):
                     delete_vorratseintrag(db, eintrag.id)
                     st.success(f"✅ {eintrag.zutat.name} wurde gelöscht!")

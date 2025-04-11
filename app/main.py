@@ -2,7 +2,7 @@ import streamlit as st
 from db import SessionLocal, add_zutat_to_vorrat, delete_vorratseintrag, add_rezept, delete_zutat_from_db
 import datetime
 from models import Vorrat, Zutat, Rezept
-from util import check_haltbarkeit
+from util import check_haltbarkeit, defaul_einheit
 from sqlalchemy.orm import joinedload
 
 st.set_page_config(page_title="Koch mit mir!", layout="wide")
@@ -14,7 +14,7 @@ st.markdown(
 tab1, tab2, tab3 = st.tabs(["📦 Vorrat", "📖 Rezepte", "🧠 Vorschläge"])
 
 
-# 🔹 UI für Vorratspeicherung in main.py
+# 🔹 UI für Vorratspeicherung
 with tab1:
     st.subheader("📥 Vorrat verwalten")
 
@@ -37,21 +37,25 @@ with tab1:
                                 index=0, key="autocomplete_zutat")
 
             # Einheit und Menge
-            einheit = st.selectbox("Einheit", ["g", "ml", "Stück"])
-            menge = st.number_input("Menge", min_value=0.0, step=0.1)
+            vorhandene_einheiten = db.query(Zutat.einheit).all()
+            einheiten_liste = [z[0]
+                             for z in vorhandene_zutaten]
+            einheit = st.selectbox("Einheit", defaul_einheit)
+            menge = st.number_input("Menge", min_value=1, step=1)
             haltbar_bis = st.date_input(
                 "Haltbar bis", value=datetime.date.today())
 
             submitted = st.form_submit_button("Hinzufügen")
+            
     if submitted:
         # Prüfe, ob der gleiche Eintrag schon im Vorrat ist
         existiert_bereits = db.query(Vorrat).join(Zutat).filter(
             Zutat.name == name.strip().capitalize(),
-            Vorrat.menge_vorhanden == menge,
             Vorrat.haltbar_bis == haltbar_bis
         ).first()
 
         if not existiert_bereits:
+            # Zutat ist noch nicht im Vorrat, also neuen Eintrag hinzufügen
             try:
                 add_zutat_to_vorrat(
                     db, name.strip().capitalize(), einheit, menge, haltbar_bis)
@@ -59,8 +63,14 @@ with tab1:
             except Exception as e:
                 st.error(f"❌ Fehler beim Hinzufügen: {e}")
         else:
-            st.warning(
-                "Diese Kombination aus Zutat, Menge und Haltbarkeit existiert bereits im Vorrat!")
+            # Wenn die Zutat bereits existiert, die Menge aktualisieren
+            try:
+                # Erhöhe die Menge um den neuen Wert
+                existiert_bereits.menge_vorhanden += menge
+                db.commit()  # Änderungen speichern
+                st.success(f"✅ Menge von {name} wurde im Vorrat aktualisiert!")
+            except Exception as e:
+                st.error(f"❌ Fehler beim Aktualisieren des Vorrats: {e}")
 
     elif action == "Zutat löschen":
         # Zutat löschen
@@ -101,7 +111,6 @@ with tab1:
                     delete_vorratseintrag(db, eintrag.id)
                     st.success(f"✅ {eintrag.zutat.name} wurde gelöscht!")
                     st.rerun()
-
         else:
             st.info("Noch nichts im Vorrat.")
     finally:

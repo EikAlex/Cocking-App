@@ -20,47 +20,78 @@ db = SessionLocal()
 
 ############################################################################
 # Testdaten anlegen
+from sqlalchemy.exc import IntegrityError
+
+# Testdaten anlegen
 if True:
-# if False:
-    # Zutaten anlegen
-    mehl = Zutat(name="Mehl", einheit="g")
-    ei = Zutat(name="Ei", einheit="Stück")
-    milch = Zutat(name="Milch", einheit="ml")
-    zucker = Zutat(name="Zucker", einheit="g")
+    try:
+        # Zutaten anlegen, aber nur, wenn sie noch nicht existieren
+        zutaten_namen = ["Mehl", "Ei", "Milch", "Zucker"]
+        zutaten_einheiten = ["g", "Stück", "ml", "g"]
+        
+        zutaten = []
+        for name, einheit in zip(zutaten_namen, zutaten_einheiten):
+            # Prüfe, ob die Zutat bereits existiert
+            existing_zutat = db.query(Zutat).filter(Zutat.name == name).first()
+            if not existing_zutat:
+                # Zutat hinzufügen, wenn sie nicht existiert
+                zutat = Zutat(name=name, einheit=einheit)
+                db.add(zutat)
+                zutaten.append(zutat)
+            else:
+                zutaten.append(existing_zutat)
 
-    db.add_all([mehl, ei, milch, zucker])
-    db.commit()
+        db.commit()
 
-    # Vorrat anlegen
-    db.add_all([
-        Vorrat(zutat_id=mehl.id, menge_vorhanden=1000,
-               haltbar_bis=date(2025, 12, 31)),
-        Vorrat(zutat_id=ei.id, menge_vorhanden=6,
-               haltbar_bis=date(2025, 5, 1)),
-        Vorrat(zutat_id=milch.id, menge_vorhanden=500,
-               haltbar_bis=date(2025, 4, 20)),
-        Vorrat(zutat_id=zucker.id, menge_vorhanden=300,
-               haltbar_bis=date(2026, 1, 1)),
-    ])
-    db.commit()
+        # Vorrat anlegen
+        vorrat_daten = [
+            (zutaten[0].id, 1000, date(2025, 12, 31)),  # Mehl
+            (zutaten[1].id, 6, date(2025, 5, 1)),      # Ei
+            (zutaten[2].id, 500, date(2025, 4, 20)),    # Milch
+            (zutaten[3].id, 300, date(2026, 1, 1)),    # Zucker
+        ]
 
-    # Rezept anlegen
-    rezept = Rezept(name="Pfannkuchen",
-                    beschreibung="Klassisches Rezept für 2 Portionen.")
+        for zutat_id, menge, haltbar_bis in vorrat_daten:
+            # Prüfe, ob der Vorrat mit dieser Zutat und Haltbarkeit bereits existiert
+            existing_vorrat = db.query(Vorrat).filter(
+                Vorrat.zutat_id == zutat_id,
+                Vorrat.haltbar_bis == haltbar_bis
+            ).first()
+            if not existing_vorrat:
+                db.add(Vorrat(zutat_id=zutat_id, menge_vorhanden=menge, haltbar_bis=haltbar_bis))
 
-    db.add(rezept)
-    db.commit()
+        db.commit()
 
-    # Zutaten mit Mengen für das Rezept
-    db.add_all([
-        RezeptZutat(rezept_id=rezept.id, zutat_id=mehl.id, menge=200),
-        RezeptZutat(rezept_id=rezept.id, zutat_id=ei.id, menge=2),
-        RezeptZutat(rezept_id=rezept.id, zutat_id=milch.id, menge=250),
-        RezeptZutat(rezept_id=rezept.id, zutat_id=zucker.id, menge=50),
-    ])
-    db.commit()
+        # Rezept anlegen
+        rezept = Rezept(name="Pfannkuchen", beschreibung="Klassisches Rezept für 2 Portionen.")
+        db.add(rezept)
+        db.commit()
 
-    print("✅ Testdaten erfolgreich hinzugefügt.")
+        # Zutaten mit Mengen für das Rezept
+        rezept_zutaten = [
+            (rezept.id, zutaten[0].id, 200),  # Mehl
+            (rezept.id, zutaten[1].id, 2),    # Ei
+            (rezept.id, zutaten[2].id, 250),  # Milch
+            (rezept.id, zutaten[3].id, 50),   # Zucker
+        ]
+
+        for rezept_id, zutat_id, menge in rezept_zutaten:
+            # Überprüfe, ob die Kombination Rezept und Zutat bereits existiert
+            existing_rezept_zutat = db.query(RezeptZutat).filter(
+                RezeptZutat.rezept_id == rezept_id,
+                RezeptZutat.zutat_id == zutat_id
+            ).first()
+            if not existing_rezept_zutat:
+                db.add(RezeptZutat(rezept_id=rezept_id, zutat_id=zutat_id, menge=menge))
+
+        db.commit()
+
+        print("✅ Testdaten erfolgreich hinzugefügt.")
+
+    except IntegrityError as e:
+        # Hier fängt man die Exception ab, falls ein Duplikat-Fehler auftritt
+        db.rollback()  # Transaktion zurückrollen, falls Fehler auftreten
+        print(f"❌ Fehler beim Hinzufügen der Testdaten: {e}")
 ############################################################################
 
 # Initialisiere Standard-Zutaten

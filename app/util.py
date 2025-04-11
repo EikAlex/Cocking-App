@@ -2,7 +2,8 @@ import streamlit as st
 from datetime import datetime
 from db import SessionLocal, Vorrat
 from models import Vorrat, Zutat, Rezept, RezeptZutat
-
+defaul_einheit = [
+        "g", "ml", "Stück", "TL", "EL", "Prise", "kg", "l", "Pck.", "Dose", "Glas"]
 
 def check_haltbarkeit(ablaufdatum):
     """
@@ -24,18 +25,25 @@ def check_haltbarkeit(ablaufdatum):
     return f'<span style="color:{farbe}; font-size:18px;">{symbol} 📅 {ablaufdatum}</span>'
 
 
+def delete_zutat_from_db(db, zutat_name):
+    """Löscht eine Zutat aus der Datenbank."""
+    zutat = db.query(Zutat).filter(Zutat.name == zutat_name).first()
+    if zutat:
+        db.delete(zutat)
+        db.commit()
+        return True
+    return False
+
+
 def initialize_default_zutaten(db):
     # Liste mit Standard-Zutaten
     default_zutaten = [
         "Tomaten", "Kartoffeln", "Zwiebeln", "Knoblauch", "Salz", "Pfeffer",
-        "Olivenöl", "Mehl", "Eier", "Milch", "Butter", "Hefe", "Paprika",
-        "Kräuter", "Zucker", "Reis", "Pasta", "Linsen", "Hähnchenbrust", "Rindfleisch",
-        "Schinken", "Mozzarella", "Parmesan", "Sahne", "Kochschinken", "Paprikapulver",
-        "Chili", "Kaffee", "Kakaopulver", "Honig", "Essig", "Senf", "Balsamico",
+        "Olivenöl", "Mehl", "Eier", "Milch", "Butter", "Hefe", "Paprika", 
+        "Kräuter", "Zucker", "Reis", "Pasta", "Linsen", "Hähnchenbrust", "Rindfleisch", 
+        "Schinken", "Mozzarella", "Parmesan", "Sahne", "Kochschinken", "Paprikapulver", 
+        "Chili", "Kaffee", "Kakaopulver", "Honig", "Essig", "Senf", "Balsamico", 
         "Kokosmilch", "Gemüsebrühe", "Fisch", "Thunfisch", "Spinat", "Lauch", "Karotten"
-    ]
-    default_einheiten = [
-        "g", "ml", "Stück", "TL", "EL", "Prise", "kg", "l", "Pck.", "Dose", "Glas"
     ]
     # Überprüfen, ob jede Zutat bereits existiert und hinzufügen, falls nicht
     for zutat_name in default_zutaten:
@@ -47,13 +55,6 @@ def initialize_default_zutaten(db):
             db.add(new_zutat)
             db.commit()
             db.refresh(new_zutat)
-
-    for einheit in default_einheiten:
-        # Überprüfen, ob die Einheit schon in der DB existiert
-        einheit_obj = db.query(Zutat).filter(Zutat.einheit == einheit).first()
-        if not einheit_obj:
-            # Wenn die Einheit nicht existiert, fügen wir sie hinzu
-            new_einheit = Zutat(einheit=einheit)
-            db.add(new_einheit)
-            db.commit()
-            db.refresh(new_einheit)
+            print(f"Zutat '{zutat_name}' hinzugefügt.")
+        else:
+            print(f"Zutat '{zutat_name}' ist bereits vorhanden.")

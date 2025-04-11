@@ -48,7 +48,7 @@ coocking-app/
 ## 1. Klone das Repository
 git clone https://github.com/EikAlex/Cocking-App.git
 
-cd koch-app
+cd Cocking-App
 
 ## 2. Starte die Anwendung
 docker-compose up --build 

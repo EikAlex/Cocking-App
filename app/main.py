@@ -3,6 +3,7 @@ from db import SessionLocal, add_zutat_to_vorrat, delete_vorratseintrag, add_rez
 import datetime
 import pandas as pd
 from models import Vorrat, Zutat, Rezept, RezeptZutat
+from util import check_haltbarkeit
 from sqlalchemy.orm import joinedload
 
 st.set_page_config(page_title="Koch mit mir!", layout="wide")
@@ -43,7 +44,6 @@ with tab1:
     db = SessionLocal()
     try:
         eintraege = db.query(Vorrat).options(joinedload(Vorrat.zutat)).all()
-
         if eintraege:
             ## Tabelle anzeigen alternatiive
             # daten = [{
@@ -61,7 +61,9 @@ with tab1:
                 col1.write(f"**{eintrag.zutat.name}**")
                 col2.write(f"{eintrag.menge_vorhanden}")
                 col3.write(eintrag.zutat.einheit)
-                col4.write(eintrag.haltbar_bis.strftime("%Y-%m-%d"))
+                haltbarkeit_html = check_haltbarkeit(eintrag.haltbar_bis)
+                col4.markdown(haltbarkeit_html, unsafe_allow_html=True)
+                # col4.write("📅 " + eintrag.haltbar_bis.strftime("%d.%m.%Y"))
                 if col5.button("🗑️ Löschen", key=f"delete_{eintrag.id}"):
                     delete_vorratseintrag(db, eintrag.id)
                     st.success(f"✅ {eintrag.zutat.name} wurde gelöscht!")

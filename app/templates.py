@@ -3,16 +3,6 @@ Hier werden die Templates für die verschiedenen Funktionen der App definiert.
 Die Templates sind in verschiedene Kategorien unterteilt, um die Übersichtlichkeit zu erhöhen.
 Erstellt mithilfe con Chatgpt GPT-4."""
 
-# 📚 Kochbuch & Rezepte
-
-#     🍽️ – Allgemeines Rezept
-#     🥄 – Zubereitungsschritte
-#     📖 – Rezeptübersicht / Kochbuch
-#     🧑‍🍳 – Kochen / Chef-Modus
-#     🕒 – Kochzeit
-#     🔥 – Schwierigkeitsgrad / "Hot Recipe"
-#     📷 – Foto vom Gericht
-
 
 # 🥫 Vorratsverwaltung / Pantry
 #     🧺 – Vorrat allgemein
@@ -28,6 +18,23 @@ Erstellt mithilfe con Chatgpt GPT-4."""
 #     ⚠️ – Niedriger Bestand
 
 
+# 📚 Kochbuch & Rezepte
+#     🍽️ – Allgemeines Rezept
+#     🥄 – Zubereitungsschritte
+#     📖 – Rezeptübersicht / Kochbuch
+#     🧑‍🍳 – Kochen / Chef-Modus
+#     🕒 – Kochzeit
+#     🔥 – Schwierigkeitsgrad / "Hot Recipe"
+#     📷 – Foto vom Gericht
+
+# 🍴 Essensplanung / Wochenplang
+#     🧠 – Nachdenken
+#     📆 – Wochenplan
+#     🍝 – Heute kochen
+#     🥗 – Gesund essen
+#     🕰️ – Essenszeiten
+
+
 # 🛒 Einkauf & Planung
 #     🛒 – Einkaufsliste
 #     📝 – Notizen zur Einkaufsliste
@@ -35,13 +42,6 @@ Erstellt mithilfe con Chatgpt GPT-4."""
 #     ✅ – Abgehakt
 #     🛍️ – Gekauft
 #     🔄 – Nachkaufen
-
-
-# 🍴 Essensplanung / Wochenplan
-#     📆 – Wochenplan
-#     🍝 – Heute kochen
-#     🥗 – Gesund essen
-#     🕰️ – Essenszeiten
 
 
 # ⚙️ Allgemeine Funktionen / Einstellungen
@@ -54,10 +54,10 @@ Erstellt mithilfe con Chatgpt GPT-4."""
 #     📊 – Statistiken
 #     🛠️ – Tech-Stack
 #     🚀 – Features
-#     🥘 – 
-#     🐳 –
-#     🌐 –
-#     🐘 –
-#     🧪 –
-#     🐍 –
-#     🧱 –
+#     🥘 – Pizza
+#     🐳 – Docker
+#     🌐 – Streamlit
+#     🐘 – PostgreSQL
+#     🧪 – Alechemy
+#     🐍 – Python
+#     🧱 – Building

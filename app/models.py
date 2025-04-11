@@ -3,18 +3,6 @@ from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
 
-# Vorrat Tab
-
-
-# class Zutat(Base):
-#     __tablename__ = "zutaten"
-#     id = Column(Integer, primary_key=True, index=True)
-#     name = Column(String, unique=True, nullable=False)
-#     einheit = Column(String)
-
-#     vorrat = relationship("Vorrat", back_populates="zutat")
-#     rezept_zutaten = relationship("RezeptZutat", back_populates="zutat")
-
 
 class Vorrat(Base):
     __tablename__ = "vorrat"
@@ -25,8 +13,6 @@ class Vorrat(Base):
 
     zutat = relationship("Zutat", back_populates="vorrat")
 
-
-# Rezept Tab
 
 class Rezept(Base):
     __tablename__ = "rezepte"

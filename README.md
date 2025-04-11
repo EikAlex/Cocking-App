@@ -44,17 +44,22 @@ coocking-app/
 ├── LICENSE
 └── README.md
 ```
-
-# 1. Klone das Repository
+---
+## 1. Klone das Repository
 git clone https://github.com/dein-user/koch-app.git
 
 cd koch-app
 
-# 2. Starte die Anwendung
+## 2. Starte die Anwendung
 docker-compose up --build
 
-# 3. Neustart und leeren der Datenbank
+## 3. Link zur Webapp
+http://localhost:8501/
+
+## 4. Neustart und leeren der Datenbank
 docker-compose down
 
 docker volume rm cooking-app_pgdata
+
+
 ### Erstellt von Alexander Schmal für die Abgabe des Mobile Applikationen Moduls 

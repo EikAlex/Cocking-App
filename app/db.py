@@ -52,6 +52,7 @@ def add_zutat_to_vorrat(db, name, einheit, menge, haltbar_bis):
 
 
 def delete_vorratseintrag(db, vorrat_id: int):
+    # Löscht einen Vorratseintrag aus der Datenbank.
     eintrag = db.query(Vorrat).filter(Vorrat.id == vorrat_id).first()
     if eintrag:
         db.delete(eintrag)
@@ -59,7 +60,7 @@ def delete_vorratseintrag(db, vorrat_id: int):
 
 
 def delete_zutat_from_db(db, zutat_name):
-    """Löscht eine Zutat aus der Datenbank."""
+    # Löscht eine Zutat aus der Datenbank.
     zutat = db.query(Zutat).filter(Zutat.name == zutat_name).first()
     if zutat:
         db.delete(zutat)
@@ -69,6 +70,7 @@ def delete_zutat_from_db(db, zutat_name):
 
 
 def add_rezept(db, name, beschreibung, zutaten_liste):
+    # Rezept anlegen
     rezept = Rezept(name=name, beschreibung=beschreibung)
     db.add(rezept)
     db.commit()

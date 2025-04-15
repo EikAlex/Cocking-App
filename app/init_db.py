@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 from models import Base, Zutat, Vorrat, Rezept, RezeptZutat
 from util import initialize_default_zutaten
 from datetime import date
@@ -19,9 +20,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 db = SessionLocal()
 
 ############################################################################
-# Testdaten anlegen
-from sqlalchemy.exc import IntegrityError
-
 # Testdaten anlegen
 if True:
     try:

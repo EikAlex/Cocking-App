@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 
 st.set_page_config(page_title="Koch mit mir!", layout="wide")
 
-st.title("🍽️ Koch mit mir!")
+st.title("🥘 Digitale Kochbuch-App mit Vorratsverwaltung")
 st.markdown(
     "Verwalte deine Rezepte und deinen Vorrat. Lass uns schauen, was du kochen kannst!")
 

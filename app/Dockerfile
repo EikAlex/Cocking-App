@@ -5,10 +5,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# COPY scripts/wait-for-it.sh /app/wait-for-it.sh
-# RUN chmod +x /app/wait-for-it.sh
 COPY . .
 
-# Verwende das Skript, um sicherzustellen, dass die DB verfügbar ist
-# CMD ./wait-for-it.sh db:5432 -- python main.py
-CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+COPY scripts/wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
+
+CMD ["/wait-for-it.sh", "db:5432", "--", "python", "init_db.py", "&&", "streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]

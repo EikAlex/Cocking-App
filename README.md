@@ -11,8 +11,8 @@ Die Daten werden in einer **PostgreSQL-Datenbank** gespeichert und mithilfe von 
 - 🧺 Vorratsverwaltung: Behalte den Überblick über Zutaten, Bestände & Verfallsdatum
 - 📖 Rezeptverwaltung: Hinzufügen, Bearbeiten und Anzeigen von Rezepten
 - 🔄 Integration: Verknüpfung von Rezepten mit Vorratsdaten
-<!-- - 🔍 Such- und Filterfunktion für einfache Bedienung -->
 - 🐳 Containerisiert mit Docker für einfache Bereitstellung
+<!-- - 🔍 Such- und Filterfunktion für einfache Bedienung -->
 
 ---
 
@@ -31,15 +31,18 @@ Die Daten werden in einer **PostgreSQL-Datenbank** gespeichert und mithilfe von 
 ## 🧱 Projektstruktur (grober Überblick)
 
 ```bash
-coocking-app/
+Cocking-App/
 ├── app/
+│   ├── scripts
+│   │   └── wit-for-it.sh
 │   ├── db.py
 │   ├── Dockerfile
 │   ├── ini_db.py
 │   ├── main.py
 │   ├── models.py
 │   ├── requirements.txt
-│   └── templates.py
+│   ├── templates.txt
+│   └── util.py
 ├── docker-compose.yml
 ├── LICENSE
 └── README.md
@@ -53,9 +56,8 @@ cd Cocking-App
 ## 2. Starte die Anwendung
 docker-compose up --build 
 
-Beim ersten Start muss der Conainer einmal nach dem Start wieder heruntergefahren (C+ Strg) und dann wieder hochgefahren (docker-compose up --build) werden.
-Da die Website nicht auf die Datenbank wartet und sie diese nicht erreicht.
-
+Falls die Datenbank langsamer startet als die Web-App und wait-for-it.sh nicht korrekt greift, kannst du mit Strg + C abbrechen und anschließend neu starten.
+Dieses Vorgehen ist nur nötig, wenn wait-for-it.sh Verbindungsprobleme zur Datenbank verursacht.
 
 ## 3. Link zur Webapp
 http://localhost:8501/

@@ -14,7 +14,6 @@ Erstellt mithilfe con Chatgpt GPT-4."""
 #     🥕 – Frische Lebensmittel
 #     🧄 – Zutaten
 #     ⏳ – Fast abgelaufen
-#     ✅ – Vorrat vorhanden
 #     ⚠️ – Niedriger Bestand
 
 
@@ -39,9 +38,9 @@ Erstellt mithilfe con Chatgpt GPT-4."""
 #     🛒 – Einkaufsliste
 #     📝 – Notizen zur Einkaufsliste
 #     ➕ – Hinzufügen zur Liste
-#     ✅ – Abgehakt
 #     🛍️ – Gekauft
 #     🔄 – Nachkaufen
+#     🏷️ – Preisvergleich
 
 
 # ⚙️ Allgemeine Funktionen / Einstellungen
@@ -50,6 +49,8 @@ Erstellt mithilfe con Chatgpt GPT-4."""
 #     📌 – Anheften
 #     💾 – Speichern
 #     ⚙️ – Einstellungen
+#     ✅ – Abgehakt
+#     ❌ – Fehler
 #     🔔 – Benachrichtigungen
 #     📊 – Statistiken
 #     🛠️ – Tech-Stack

@@ -61,7 +61,7 @@ if True:
         db.commit()
 
         # Rezept anlegen
-        rezept = Rezept(name="Pfannkuchen", beschreibung="Klassisches Rezept für 2 Portionen.")
+        rezept = Rezept(name="Pfannkuchen", beschreibung="Mehl, Eier, Milch und Salz in eine Schüssel geben. Für süße Pfannkuchen etwas Zucker dazugeben. Alles zu einem glatten Teig verrühren. Wenn der Teig zu dick ist, etwas mehr Milch dazugeben. Eine Pfanne erhitzen und mit etwas Butter oder Öl einfetten. Eine Kelle Teig in die heiße Pfanne geben und gleichmäßig verteilen. Von beiden Seiten goldbraun backen. Nach Belieben servieren – zum Beispiel mit Apfelmus, Marmelade, Zimt und Zucker oder herzhaft gefüllt.")
         db.add(rezept)
         db.commit()
 

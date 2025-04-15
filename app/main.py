@@ -12,9 +12,13 @@ st.markdown(
     "Verwalte deine Rezepte und deinen Vorrat. Lass uns schauen, was du kochen kannst!")
 
 tab1, tab2, tab3 = st.tabs(["📦 Vorrat", "📖 Rezepte", "🧠 Vorschläge"])
+# Weitere Erweitrungen geplant
+# tab1, tab2, tab3, tab4, tab5, tab5 = st.tabs(
+#     ["📦 Vorrat", "📖 Rezepte", "🧠 Vorschläge", "🛒 Einkaufsliste", "⏱️ Timer / Kochmodus", "📅 Essensplaner"])
 
 
 # 🔹 UI für Vorratspeicherung
+# TODO: Niedriger Bestaand, eingaben optional von Mindesbestand, warun wenn dieser erreicht wurde, evtl in Einkaufsliste automatisch einfügen wenn aktulle Wert < min Bestand
 with tab1:
     st.subheader("📥 Vorrat verwalten")
 
@@ -33,13 +37,30 @@ with tab1:
                              for z in vorhandene_zutaten]  # Extrahieren der Namen
 
             # Textinput mit Autocomplete
-            name = st.selectbox("Zutat", zutaten_liste,
-                                index=0, key="autocomplete_zutat")
+            # name = st.selectbox("Zutat", zutaten_liste,
+            #                     index=0, key="autocomplete_zutat")
+        # Kombi-Feld: entweder Vorschlag wählen oder eigene Zutat eingeben
+            vorgeschlagene_zutat = st.selectbox(
+                "Zutat auswählen oder eigene eingeben",
+                options=["-- Eigene Eingabe --"] + zutaten_liste,
+                index=0,
+                key="vorschlags_zutat"
+            )
 
+            name = None  # Vorbelegung
+
+            # Nur wenn eigene Eingabe gewählt wurde, zeige Textfeld
+            if vorgeschlagene_zutat == "-- Eigene Eingabe --":
+                name = st.text_input("Eigene Zutat eingeben", key="eigene_zutat")
+            else:
+                name = vorgeschlagene_zutat
+
+
+            
             # Einheit und Menge
             vorhandene_einheiten = db.query(Zutat.einheit).all()
             einheiten_liste = [z[0]
-                             for z in vorhandene_zutaten]
+                               for z in vorhandene_zutaten]
             einheit = st.selectbox("Einheit", defaul_einheit)
             menge = st.number_input("Menge", min_value=1, step=1)
             haltbar_bis = st.date_input(
@@ -47,34 +68,34 @@ with tab1:
 
             submitted = st.form_submit_button("Hinzufügen")
             
-    if submitted:
-        # Prüfe, ob der gleiche Eintrag schon im Vorrat ist
-        existiert_bereits = db.query(Vorrat).join(Zutat).filter(
-            Zutat.name == name.strip().capitalize(),
-            Vorrat.haltbar_bis == haltbar_bis
-        ).first()
+        if submitted:
+            # Prüfe, ob der gleiche Eintrag schon im Vorrat ist
+            existiert_bereits = db.query(Vorrat).join(Zutat).filter(
+                Zutat.name == name.strip().capitalize(),
+                Vorrat.haltbar_bis == haltbar_bis
+            ).first()
 
-        if not existiert_bereits:
-            # Zutat ist noch nicht im Vorrat, also neuen Eintrag hinzufügen
-            try:
-                add_zutat_to_vorrat(
-                    db, name.strip().capitalize(), einheit, menge, haltbar_bis)
-                st.success(f"✅ {name} wurde zum Vorrat hinzugefügt!")
-            except Exception as e:
-                st.error(f"❌ Fehler beim Hinzufügen: {e}")
-        else:
-            # Wenn die Zutat bereits existiert, die Menge aktualisieren
-            try:
-                # Erhöhe die Menge um den neuen Wert
-                existiert_bereits.menge_vorhanden += menge
-                db.commit()  # Änderungen speichern
-                st.success(f"✅ Menge von {name} wurde im Vorrat aktualisiert!")
-            except Exception as e:
-                st.error(f"❌ Fehler beim Aktualisieren des Vorrats: {e}")
+            if not existiert_bereits:
+                # Zutat ist noch nicht im Vorrat, also neuen Eintrag hinzufügen
+                try:
+                    add_zutat_to_vorrat(
+                        db, name.strip().capitalize(), einheit, menge, haltbar_bis)
+                    st.success(f"✅ {name} wurde zum Vorrat hinzugefügt!")
+                except Exception as e:
+                    st.error(f"❌ Fehler beim Hinzufügen: {e}")
+            else:
+                # Wenn die Zutat bereits existiert, die Menge aktualisieren
+                try:
+                    existiert_bereits.menge_vorhanden += menge
+                    db.commit()  # Änderungen speichern
+                    st.success(
+                        f"✅ Menge von {name} wurde im Vorrat aktualisiert!")
+                except Exception as e:
+                    st.error(f"❌ Fehler beim Aktualisieren des Vorrats: {e}")
 
     elif action == "Zutat löschen":
-        # Zutat löschen
-        st.subheader("🗑️ Zutat löschen")
+        # Zutat aus der Datenbank löschen falls man sich vertippt hat oder sie nicht mehr benötigt wird
+        st.subheader("🗑️ Zutat aus der DatenBank löschen")
 
         # Zutat zum Löschen auswählen
         zutaten_liste = [z[0] for z in db.query(Zutat.name).all()]
@@ -117,7 +138,7 @@ with tab1:
         db.close()
 
 
-# 🔹 UI für Rezepte in main.py
+# 🔹 UI für Rezepte
 with tab2:
     db = SessionLocal()
     st.subheader("📥 Neues Rezept hinzufügen")
@@ -185,7 +206,8 @@ with tab2:
         else:
             st.info("Noch keine Zutat hinzugefügt.")
 
-        # Rezept speichern
+# TODO: Einbinden eines webcrawlers für Rezepte, bzw evtl mit einer LLM Rezepte extrahiren aus Bildern(OCR) und Texten aus Kochbüchern.
+    # Rezept speichern
     if st.session_state.rezept_zutaten_liste:
         if st.button("✅ Rezept speichern"):
             # Überprüfen, ob der Rezeptname bereits existiert
@@ -218,33 +240,37 @@ with tab2:
     st.subheader("📖 Deine Rezepte")
 
     rezepte = db.query(Rezept).all()
-    # Indizierung hinzufügen, um eindeutigen Key zu erzeugen
     for i, rezept in enumerate(rezepte):
         with st.expander(rezept.name):
             st.markdown(rezept.beschreibung or "_Keine Beschreibung_")
-            st.markdown("**Zutaten:**")
 
-            # Der Button-Key wurde jetzt eindeutig gemacht, indem `i` zur ID hinzugefügt wurde
+            # Portionenauswahl – Default: 1
+            portionen_input = st.number_input(
+                f"👨‍🍳 Wie viele Portionen möchtest du kochen?",
+                min_value=1, value=1, step=1, key=f"portionen_{rezept.id}"
+            )
+
+            st.markdown("**Zutaten:**")
+            for rz in rezept.rezept_zutaten:
+                z = rz.zutat
+                berechnete_menge = rz.menge * portionen_input
+                st.write(f"- {berechnete_menge} {z.einheit} {z.name}")
+
+            # Löschen-Button
             delete_button = st.button(
-                f"🗑️ Löschen {rezept.name}", key=f"delete_{rezept.id}_{i}")
+                f"🗑️ Löschen {rezept.name}", key=f"delete_{rezept.id}_{i}"
+            )
             if delete_button:
                 try:
-                    db.delete(rezept)  # Rezept aus der DB entfernen
-                    db.commit()  # Änderungen speichern
+                    db.delete(rezept)
+                    db.commit()
                     st.success(
                         f"✅ Rezept '{rezept.name}' wurde erfolgreich gelöscht!")
-                    st.rerun()  # Seite neu laden, um das gelöschte Rezept zu entfernen
+                    st.rerun()
                 except Exception as e:
                     st.error(f"❌ Fehler beim Löschen des Rezepts: {e}")
 
-            # Zugriff über die `rezept_zutaten` Beziehung
-            for rz in rezept.rezept_zutaten:
-                z = rz.zutat  # Direkter Zugriff auf Zutat über die Beziehung
-                st.write(f"- {rz.menge} {z.einheit} {z.name}")
-
-
-# 🔹 UI für Vorschläge in main.py
-
+# 🔹 UI für Vorschläge
 with tab3:
     db = SessionLocal()
     st.subheader("🧠 Rezeptvorschläge basierend auf deinem Vorrat")
@@ -275,8 +301,6 @@ with tab3:
                         (rz.zutat.name, benoetigte_menge - vorhandene_menge, rz.zutat.einheit))
 
         with st.expander(rezept.name):
-            st.markdown(rezept.beschreibung or "_Keine Beschreibung_")
-
             if portionen_moeglich >= 1:
                 st.success(
                     f"✅ Du kannst ca. {int(portionen_moeglich)} Portion(en) kochen")
@@ -287,6 +311,25 @@ with tab3:
                     for name, diff, einheit in fehlende_zutaten:
                         st.write(f"- {diff:.2f} {einheit} {name}")
 
-            st.markdown("**Zutatenübersicht:**")
+            st.markdown("**Zutatenübersicht pro Portion:**")
             for rz in rezept.rezept_zutaten:
-                st.write(f"- {rz.menge} {rz.zutat.einheit} {rz.zutat.name}")
+                benoetigte_menge = rz.menge
+                vorhandene_menge = vorrats_map.get(rz.zutat_id, 0)
+                st.write(f"- {benoetigte_menge} {rz.zutat.einheit} {rz.zutat.name}"
+                         f" --  (🧺 Vorrat: {vorhandene_menge} {rz.zutat.einheit})")
+# TODO: UI für Einkaufsliste, Timer und Essensplaner
+# 🔹 UI für Einkaufsliste
+# with tab4:
+#     db = SessionLocal()
+#     st.subheader("🛒 Einkaufsliste erstellen und verwalten")
+
+
+# 🔹 UI für Timer / Kochmodus
+# with tab4:
+#     db = SessionLocal()
+#     st.subheader("⏱️ Kochen wir gemeinsam!")
+
+# 🔹 UI für Essensplaner
+# with tab4:
+#     db = SessionLocal()
+#     st.subheader("📅 Plane deine Woche")

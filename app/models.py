@@ -43,3 +43,4 @@ class Zutat(Base):
 
     vorrat = relationship("Vorrat", back_populates="zutat")
     rezept_zutaten = relationship("RezeptZutat", back_populates="zutat")
+    # TODO: Icon nach Zutat(Kategorie) hinzufügen, sowie Hinweis TK, Frisch, Gewürze etc. 

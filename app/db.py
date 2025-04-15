@@ -69,15 +69,30 @@ def delete_zutat_from_db(db, zutat_name):
     return False
 
 
+# def add_rezept(db, name, beschreibung, zutaten_liste):
+#     # Rezept anlegen
+#     rezept = Rezept(name=name, beschreibung=beschreibung)
+#     db.add(rezept)
+#     db.commit()
+#     db.refresh(rezept)
+
+#     for zutat_id, menge in zutaten_liste:
+#         rz = RezeptZutat(rezept_id=rezept.id, zutat_id=zutat_id, menge=menge)
+#         db.add(rz)
+
+    db.commit()
 def add_rezept(db, name, beschreibung, zutaten_liste):
-    # Rezept anlegen
+    # Neues Rezept erstellen
     rezept = Rezept(name=name, beschreibung=beschreibung)
     db.add(rezept)
-    db.commit()
-    db.refresh(rezept)
+    db.flush()  # Holt die ID des Rezepts vor dem Commit
 
-    for zutat_id, menge in zutaten_liste:
-        rz = RezeptZutat(rezept_id=rezept.id, zutat_id=zutat_id, menge=menge)
-        db.add(rz)
+    for zutat_id, menge_pro_portion in zutaten_liste:
+        rezept_zutat = RezeptZutat(
+            rezept_id=rezept.id,
+            zutat_id=zutat_id,
+            menge=menge_pro_portion  # wichtig: nur pro Portion speichern!
+        )
+        db.add(rezept_zutat)
 
     db.commit()

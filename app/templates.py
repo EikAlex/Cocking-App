@@ -12,6 +12,7 @@ Erstellt mithilfe con Chatgpt GPT-4."""
 #     🥫 – Konserven
 #     ❄️ – Tiefkühltruhe
 #     🥕 – Frische Lebensmittel
+#     🥘 – Fertiggerichte
 #     🧄 – Zutaten
 #     ⏳ – Fast abgelaufen
 #     ⚠️ – Niedriger Bestand
@@ -55,7 +56,6 @@ Erstellt mithilfe con Chatgpt GPT-4."""
 #     📊 – Statistiken
 #     🛠️ – Tech-Stack
 #     🚀 – Features
-#     🥘 – Pizza
 #     🐳 – Docker
 #     🌐 – Streamlit
 #     🐘 – PostgreSQL

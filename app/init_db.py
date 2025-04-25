@@ -46,7 +46,7 @@ if True:
             (zutaten[0].id, 1000, date(2025, 12, 31), 200),  # Mehl
             (zutaten[1].id, 6, date(2025, 5, 1), 2),      # Ei
             (zutaten[2].id, 500, date(2025, 5, 3), 200),    # Milch
-            (zutaten[3].id, 300, date(2026, 1, 1), 100),    # Zucker
+            (zutaten[3].id, 300, date(2026, 1, 1), 500),    # Zucker
         ]
 
         for zutat_id, menge, haltbar_bis, mindest in vorrat_daten:

@@ -1,7 +1,7 @@
 import streamlit as st
 from db import SessionLocal, add_zutat_to_vorrat, delete_vorratseintrag, add_rezept, delete_zutat_from_db
 import datetime
-from models import Vorrat, Zutat, Rezept
+from models import Vorrat, Zutat, Rezept, Einkaufsliste
 from util import check_haltbarkeit, defaul_einheit
 from sqlalchemy.orm import joinedload
 
@@ -13,10 +13,11 @@ st.markdown(
 
 
 # Tabs für die verschiedenen Funktionen
-tab1, tab2, tab3 = st.tabs(["📦 Vorrat", "📖 Rezepte", "🧠 Vorschläge"])
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["📦 Vorrat", "📖 Rezepte", "🧠 Vorschläge", "🛒 Einkaufsliste"])
 
-#TODO: Weitere Tabs geplant
-#["🛒 Einkaufsliste", "📅 Essensplaner", "⏱️ Timer / Kochmodus"])
+# TODO: Weitere Tabs geplant
+# [, "📅 Essensplaner", "⏱️ Timer / Kochmodus", 📷 OCR für Rezepte aus Fotos (z. B. mit Tesseract oder EasyOCR),🔄 LLM-Anbindung für automatische Rezeptideen aus deinen Vorräten])
 
 # 🔹 UI für Vorratspeicherung
 # TODO:(Optinal) Niedriger Bestand, eingaben optional von Mindesbestand, warun wenn dieser erreicht wurde, evtl in Einkaufsliste automatisch einfügen wenn aktulle Wert < min Bestand
@@ -52,11 +53,15 @@ with tab1:
 
             # Einheit und Menge
             vorhandene_einheiten = db.query(Zutat.einheit).distinct().all()
-            einheiten_liste = [e[0] for e in vorhandene_einheiten if e[0]] or ["Stück", "g", "ml"]
+            einheiten_liste = [e[0] for e in vorhandene_einheiten if e[0]] or [
+                "Stück", "g", "ml"]
 
-            einheit = st.selectbox("Einheit", options=einheiten_liste, key="einheit_input")
-            menge = st.number_input("Menge", min_value=1, step=1, key="menge_input")
-            haltbar_bis = st.date_input("Haltbar bis", value=datetime.date.today(), key="mhd_input")
+            einheit = st.selectbox(
+                "Einheit", options=einheiten_liste, key="einheit_input")
+            menge = st.number_input(
+                "Menge", min_value=1, step=1, key="menge_input")
+            haltbar_bis = st.date_input(
+                "Haltbar bis", value=datetime.date.today(), key="mhd_input")
             mindestbestand = st.number_input(
                 "🧾 Optional: Mindestbestand", min_value=0, step=1, value=0, key="mb_input")
 
@@ -88,7 +93,8 @@ with tab1:
                     if mindestbestand > 0:
                         existiert_bereits.mindestbestand = mindestbestand
                     db.commit()
-                    st.success(f"✅ Menge von {name} wurde im Vorrat aktualisiert!")
+                    st.success(
+                        f"✅ Menge von {name} wurde im Vorrat aktualisiert!")
                 except Exception as e:
                     st.error(f"❌ Fehler beim Aktualisieren des Vorrats: {e}")
 
@@ -358,10 +364,99 @@ with tab3:
 
 # TODO: UI für Einkaufsliste, Timer und Essensplaner
 # 🔹 UI für Einkaufsliste
-# with tab4:
-#     db = SessionLocal()
-#     st.subheader("🛒 Einkaufsliste erstellen und verwalten")
+with tab4:
+    db = SessionLocal()
+    st.subheader("🛒 Einkaufsliste erstellen und verwalten")
 
+    # Automatisch ergänzen: alle Vorräte prüfen, wo menge < mindestbestand
+    auto_ergänzt = 0
+    vorrat = db.query(Vorrat).options(joinedload(Vorrat.zutat)).all()
+    for v in vorrat:
+        if v.mindestbestand and v.menge_vorhanden < v.mindestbestand:
+            differenz = v.mindestbestand - v.menge_vorhanden
+            eintrag = db.query(Einkaufsliste).filter_by(
+                zutat_id=v.zutat.id).first()
+            if eintrag:
+                eintrag.menge = max(eintrag.menge, differenz)
+            else:
+                db.add(Einkaufsliste(zutat_id=v.zutat.id, menge=differenz))
+            auto_ergänzt += 1
+    if auto_ergänzt > 0:
+        db.commit()
+        st.info(
+            f"🧠 {auto_ergänzt} Zutaten wurden automatisch ergänzt (Mindestbestand unterschritten).")
+
+    st.markdown("---")
+
+    # Manuelles Hinzufügen zur Liste
+    with st.expander("➕ Zutat zur Einkaufsliste hinzufügen"):
+        zutaten = db.query(Zutat).all()
+        name_to_id = {z.name: z.id for z in zutaten}
+        auswahl = st.selectbox("Zutat auswählen", list(
+            name_to_id.keys()), key="zutat_einkauf")
+        menge = st.number_input("Menge", min_value=1.0,
+                                step=1.0, key="menge_einkauf")
+        if st.button("🛒 Zur Einkaufsliste hinzufügen", key="hinzufuegen_einkauf"):
+            z_id = name_to_id[auswahl]
+            bestehend = db.query(Einkaufsliste).filter_by(
+                zutat_id=z_id).first()
+            if bestehend:
+                bestehend.menge += menge
+            else:
+                db.add(Einkaufsliste(zutat_id=z_id, menge=menge))
+            db.commit()
+            st.success("Hinzugefügt!")
+            st.rerun()
+
+    st.markdown("---")
+    st.subheader("📋 Aktuelle Einkaufsliste")
+
+    einkaufsliste = db.query(Einkaufsliste).options(
+        joinedload(Einkaufsliste.zutat)).all()
+
+    if einkaufsliste:
+        for eintrag in einkaufsliste:
+            col1, col2, col3, col4, col5 = st.columns([3, 2, 2, 1, 1])
+            zutat = eintrag.zutat
+            einheit = zutat.einheit or ""
+
+            col1.write(f"**{zutat.name}**")
+
+            key_input = f"menge_input_{eintrag.id}"
+            if key_input not in st.session_state:
+                st.session_state[key_input] = int(eintrag.menge)
+
+            neue_menge = col2.number_input(
+                "",
+                min_value=0,
+                step=1,
+                value=st.session_state[key_input],
+                key=key_input,
+                label_visibility="collapsed"
+            )
+
+            if col3.button("💾", key=f"save_{eintrag.id}"):
+                eintrag.menge = neue_menge
+                db.commit()
+                st.success(f"Menge von '{zutat.name}' aktualisiert!")
+                st.rerun()
+            
+            #TODO: button noch bearbeiten mit funktion
+            if col4.button("🛍️", key=f"bought_{eintrag.id}"):
+                db.delete(eintrag)
+                db.commit()
+                st.success(f"'{zutat.name}' als gekauft markiert.")
+                st.rerun()
+                
+            if col5.button("❌", key=f"remove_{eintrag.id}"):
+                db.delete(eintrag)
+                db.commit()
+                st.success(f"'{zutat.name}' wurde entfernt.")
+                st.rerun()
+    else:
+        st.info("🧺 Deine Einkaufsliste ist aktuell leer.")
+
+    db.close()
 
 # 🔹 UI für Timer / Kochmodus
 # with tab4:

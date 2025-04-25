@@ -10,7 +10,7 @@ class Vorrat(Base):
     zutat_id = Column(Integer, ForeignKey("zutaten.id"), nullable=False)
     menge_vorhanden = Column(Integer, nullable=False)
     haltbar_bis = Column(Date)
-
+    mindestbestand = Column(Integer, nullable=True)
     zutat = relationship("Zutat", back_populates="vorrat")
 
 
@@ -43,4 +43,13 @@ class Zutat(Base):
 
     vorrat = relationship("Vorrat", back_populates="zutat")
     rezept_zutaten = relationship("RezeptZutat", back_populates="zutat")
-    # TODO: Icon nach Zutat(Kategorie) hinzufügen, sowie Hinweis TK, Frisch, Gewürze etc. 
+    # TODO: Icon nach Zutat(Kategorie) hinzufügen, sowie Hinweis TK, Frisch, Gewürze etc.
+
+
+class Einkaufsliste(Base):
+    __tablename__ = "einkaufsliste"
+    id = Column(Integer, primary_key=True)
+    zutat_id = Column(Integer, ForeignKey("zutaten.id"))
+    menge = Column(Integer)
+
+    zutat = relationship("Zutat")

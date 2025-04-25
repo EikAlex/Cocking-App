@@ -17,7 +17,7 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def add_zutat_to_vorrat(db, name, einheit, menge, haltbar_bis):
+def add_zutat_to_vorrat(db, name, einheit, menge, haltbar_bis, mindestbestand):
     # Zutat suchen oder neu anlegen
     zutat = db.query(Zutat).filter(Zutat.name == name).first()
 
@@ -44,7 +44,8 @@ def add_zutat_to_vorrat(db, name, einheit, menge, haltbar_bis):
         eintrag = Vorrat(
             zutat_id=zutat.id,
             menge_vorhanden=menge,
-            haltbar_bis=haltbar_bis
+            haltbar_bis=haltbar_bis,
+            mindestbestand=mindestbestand
         )
         db.add(eintrag)
         db.commit()  # Sicherstellen, dass der Vorratseintrag gespeichert wird

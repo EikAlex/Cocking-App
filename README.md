@@ -65,7 +65,7 @@ http://localhost:8501/
 ## 4. Neustart und leeren der Datenbank
 docker-compose down
 
-docker volume rm cooking-app_pgdata
+docker volume rm cocking-app_pgdata
 
 ---
 ### Erstellt von Alexander Schmal für die Abgabe des Mobile Applikationen Moduls 

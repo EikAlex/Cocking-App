@@ -20,7 +20,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 db = SessionLocal()
 
 ############################################################################
-# Testdaten anlegen
+# Testdaten / Rezept mit Zutaten anlegen
 if True:
     try:
         # Zutaten anlegen, aber nur, wenn sie noch nicht existieren
@@ -43,17 +43,18 @@ if True:
 
         # Vorrat anlegen
         vorrat_daten = [
-            (zutaten[0].id, 1000, date(2025, 12, 31)),  # Mehl
-            (zutaten[1].id, 6, date(2025, 5, 1)),      # Ei
-            (zutaten[2].id, 500, date(2025, 4, 20)),    # Milch
-            (zutaten[3].id, 300, date(2026, 1, 1)),    # Zucker
+            (zutaten[0].id, 1000, date(2025, 12, 31), 200),  # Mehl
+            (zutaten[1].id, 6, date(2025, 5, 1), 2),      # Ei
+            (zutaten[2].id, 500, date(2025, 5, 3), 200),    # Milch
+            (zutaten[3].id, 300, date(2026, 1, 1), 100),    # Zucker
         ]
 
-        for zutat_id, menge, haltbar_bis in vorrat_daten:
+        for zutat_id, menge, haltbar_bis, mindest in vorrat_daten:
             # Prüfe, ob der Vorrat mit dieser Zutat und Haltbarkeit bereits existiert
             existing_vorrat = db.query(Vorrat).filter(
                 Vorrat.zutat_id == zutat_id,
-                Vorrat.haltbar_bis == haltbar_bis
+                Vorrat.haltbar_bis == haltbar_bis,
+                Vorrat.mindestbestand == mindest
             ).first()
             if not existing_vorrat:
                 db.add(Vorrat(zutat_id=zutat_id, menge_vorhanden=menge, haltbar_bis=haltbar_bis))

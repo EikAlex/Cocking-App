@@ -1,6 +1,13 @@
 import streamlit as st
 from db import SessionLocal, add_zutat_to_vorrat, delete_vorratseintrag, add_rezept, delete_zutat_from_db
 import datetime
+import llm_import
+import openai
+import requests
+import easyocr
+import numpy as np
+from PIL import Image
+from bs4 import BeautifulSoup
 from models import Vorrat, Zutat, Rezept, Einkaufsliste
 from util import check_haltbarkeit, defaul_einheit
 from sqlalchemy.orm import joinedload
@@ -13,8 +20,8 @@ st.markdown(
 
 
 # Tabs für die verschiedenen Funktionen
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["📦 Vorrat", "📖 Rezepte", "🧠 Vorschläge", "🛒 Einkaufsliste"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["📦 Vorrat", "📖 Rezepte", "🧠 Vorschläge", "🛒 Einkaufsliste", "📥 Rezept-Import"])
 
 # TODO: Weitere Tabs geplant
 # [, "📅 Essensplaner", "⏱️ Timer / Kochmodus", 📷 OCR für Rezepte aus Fotos (z. B. mit Tesseract oder EasyOCR),🔄 LLM-Anbindung für automatische Rezeptideen aus deinen Vorräten])
@@ -457,6 +464,118 @@ with tab4:
         st.info("🧺 Deine Einkaufsliste ist aktuell leer.")
 
     db.close()
+
+with tab5:
+    from db import SessionLocal
+    import llm_import
+    import openai
+
+    st.subheader("📥 Rezept-Import")
+
+    option = st.radio(
+        "Was möchtest du importieren?",
+        ("📷 Bild hochladen", "🌐 Webseite angeben")
+    )
+
+    extrahierter_text = ""
+
+    if option == "📷 Bild hochladen":
+        bild = st.file_uploader("Lade ein Bild hoch", type=["jpg", "jpeg", "png"])
+        if bild:
+            import easyocr
+            import numpy as np
+            from PIL import Image
+
+            st.image(bild, caption="Hochgeladenes Bild", use_column_width=True)
+            img = Image.open(bild)
+            img_array = np.array(img)
+
+            reader = easyocr.Reader(["de", "en"], gpu=False)
+            with st.spinner("🔍 Texterkennung läuft..."):
+                result = reader.readtext(img_array, detail=0, paragraph=True)
+
+            extrahierter_text = "\n".join(result)
+            st.text_area("📄 Erkannter Text:", extrahierter_text, height=300)
+
+    elif option == "🌐 Webseite angeben":
+        url = st.text_input("Gib die URL einer Rezept-Webseite ein")
+        if url:
+            import requests
+            from bs4 import BeautifulSoup
+            try:
+                st.info(f"🔗 Webseite wird geladen: {url}")
+                page = requests.get(url, timeout=10)
+                soup = BeautifulSoup(page.content, "html.parser")
+                texte = [p.get_text(strip=True) for p in soup.find_all(["p", "li"])]
+                extrahierter_text = "\n".join(texte)
+                st.text_area("📄 Gefundener Text:", extrahierter_text, height=300)
+            except Exception as e:
+                st.error(f"❌ Fehler beim Laden der Seite: {e}")
+
+    if extrahierter_text:
+        if st.button("🤖 Rezept aus Text extrahieren"):
+            with st.spinner("🧠 LLM wird kontaktiert..."):
+                try:
+                    openai.api_key = st.secrets["openai_api_key"]
+                    llm_import.openai.api_key = openai.api_key
+
+                    rezept_daten = llm_import.rezept_aus_text_extrahieren(extrahierter_text)
+
+                    st.success("🎉 Text erfolgreich extrahiert!")
+
+                    st.markdown("---")
+                    # 🧾 Rezept-Dashboard anzeigen
+                    with st.expander("🧾 Importiertes Rezept ansehen", expanded=True):
+                        st.subheader(rezept_daten["name"])
+
+                        st.markdown("### 📝 Beschreibung")
+                        st.write(rezept_daten["beschreibung"])
+
+                        st.markdown("### 🛒 Zutatenliste")
+                        for z in rezept_daten["zutaten"]:
+                            st.write(f"- {z['menge']} x {z['name']}")
+
+                    st.markdown("---")
+                    st.subheader("✏️ Nachbearbeiten (optional)")
+
+                    # Bearbeitbare Felder
+                    rezeptname = st.text_input("Rezeptname", value=rezept_daten["name"])
+                    beschreibung = st.text_area("Beschreibung", value=rezept_daten["beschreibung"])
+
+                    zutaten_liste = rezept_daten["zutaten"]
+                    edited_zutaten = []
+                    st.markdown("### 🛒 Zutaten bearbeiten")
+                    for i, z in enumerate(zutaten_liste):
+                        col1, col2 = st.columns([3, 1])
+                        name = col1.text_input(f"Zutat {i+1} Name", value=z["name"], key=f"edit_name_{i}")
+                        menge = col2.number_input(f"Menge {i+1}", value=z["menge"], min_value=0.0, step=1.0, key=f"edit_menge_{i}")
+                        edited_zutaten.append({"name": name, "menge": menge})
+
+                    if st.button("✅ Bearbeitete Version speichern"):
+                        try:
+                            db = SessionLocal()
+                            neues_rezept = {
+                                "name": rezeptname,
+                                "beschreibung": beschreibung,
+                                "zutaten": edited_zutaten
+                            }
+
+                            llm_import.rezept_speichern(db, neues_rezept)
+
+                            st.success(f"🎉 Bearbeitetes Rezept '{rezeptname}' erfolgreich gespeichert!")
+                            db.close()
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Fehler beim Speichern: {e}")
+
+                    st.markdown("---")
+                    if st.button("📖 Importiertes Rezept in Übersicht anzeigen"):
+                        st.session_state.rezept_phase = "start"
+                        st.rerun()
+
+                except Exception as e:
+                    st.error(f"❌ Fehler: {e}")
+
 
 # 🔹 UI für Timer / Kochmodus
 # with tab4:

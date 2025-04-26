@@ -1,18 +1,23 @@
-# 🥘 Digitale Kochbuch-App mit Vorratsverwaltung
+# 🥘 Digitale Kochbuch-App mit integrierter Vorratsverwaltung
 
-Willkommen zur digitalen Kochbuch-App mit integrierter Vorratsverwaltung!  
-Diese Anwendung wurde mit **Python** und **Streamlit** erstellt und bietet eine einfache und moderne Benutzeroberfläche für das Verwalten von Rezepten und Vorräten.  
-Die Daten werden in einer **PostgreSQL-Datenbank** gespeichert und mithilfe von **SQLAlchemy** und **Docker** verwaltet.
+Willkommen bei deiner digitalen Kochbuch-App!  
+Diese Anwendung bietet eine moderne und intuitive Benutzeroberfläche zur Verwaltung von Rezepten und Vorräten.
+
+- Entwickelt mit **Python** und **Streamlit**
+- Speicherung aller Daten in einer **PostgreSQL-Datenbank**
+- Verwaltung der Datenbank mit **SQLAlchemy** und **Docker**
+- Integration eines **ChatGPT-gestützten Import-Systems**: Rezepte können bequem aus Bildern oder Webseiten automatisch extrahiert werden
 
 ---
 
 ## 🚀 Features
 
-- 🧺 Vorratsverwaltung: Behalte den Überblick über Zutaten, Bestände & Verfallsdatum
-- 📖 Rezeptverwaltung: Hinzufügen, Bearbeiten und Anzeigen von Rezepten
-- 🔄 Integration: Verknüpfung von Rezepten mit Vorratsdaten
-- 🐳 Containerisiert mit Docker für einfache Bereitstellung
-<!-- - 🔍 Such- und Filterfunktion für einfache Bedienung -->
+- 🧺 **Vorratsverwaltung:** Behalte den Überblick über Zutaten, Bestände und Haltbarkeitsdaten
+- 📖 **Rezeptverwaltung:** Hinzufügen, Bearbeiten und Anzeigen von Rezepten
+- 🔄 **Integration:** Verknüpfung von Rezepten mit aktuellen Vorratsdaten
+- 🧠 **Intelligenter Import:** OCR- und LLM-gestütztes Erfassen neuer Rezepte
+- 🛒 **Einkaufslisten-Generator:** Automatische Erstellung basierend auf Vorräten und Rezeptbedarf
+- 🐳 **Containerisiert:** Vollständige Bereitstellung via Docker für einfaches Setup
 
 ---
 
@@ -23,8 +28,15 @@ Die Daten werden in einer **PostgreSQL-Datenbank** gespeichert und mithilfe von 
 | 🐍 Python         | Programmiersprache der Wahl          |
 | 🌐 Streamlit      | Web-Interface für die Anwendung      |
 | 🐘 PostgreSQL     | Datenbank für Rezepte & Vorräte      |
-| 🧪 SQLAlchemy     | ORM für Datenbankzugriffe            |
+| 🧪 SQLAlchemy     | ORM für effiziente Datenbankzugriffe |
 | 🐳 Docker         | Containerisierung & Setup-Management |
+
+---
+
+## 📚 Ziel
+
+Verwalte deine Küche einfach, modern und effizient – entdecke, plane und organisiere deine Rezepte und Vorräte an einem Ort!
+
 
 ---
 
@@ -38,6 +50,7 @@ Cocking-App/
 │   ├── db.py
 │   ├── Dockerfile
 │   ├── ini_db.py
+│   ├── llm_import.py
 │   ├── main.py
 │   ├── models.py
 │   ├── requirements.txt

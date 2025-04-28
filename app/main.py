@@ -23,11 +23,10 @@ st.markdown(
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
     ["📦 Vorrat", "📖 Rezepte", "🧠 Vorschläge", "🛒 Einkaufsliste", "📥 Rezept-Import"])
 
-# TODO: Weitere Tabs geplant
-# [, "📅 Essensplaner", "⏱️ Timer / Kochmodus", 📷 OCR für Rezepte aus Fotos (z. B. mit Tesseract oder EasyOCR),🔄 LLM-Anbindung für automatische Rezeptideen aus deinen Vorräten])
+# TODO: Weitere Tabs/Optionen geplant
+# [, "📅 Essensplaner", "⏱️ Timer / Kochmodus", 📷 OCR für Rezepte aus Fotos (z. B. mit Tesseract oder EasyOCR),🔄 LLM-Anbindung für selbst gehostete Modelle erstellen])
 
 # 🔹 UI für Vorratspeicherung
-# TODO:(Optinal) Niedriger Bestand, eingaben optional von Mindesbestand, warun wenn dieser erreicht wurde, evtl in Einkaufsliste automatisch einfügen wenn aktulle Wert < min Bestand
 with tab1:
     st.subheader("📥 Vorrat verwalten")
 

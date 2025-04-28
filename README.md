@@ -80,5 +80,15 @@ docker-compose down
 
 docker volume rm cocking-app_pgdata
 
+## 5. Nutzen der Rezept-Import
+Um die Rezept-Import Funktion nutzen zu können muss in app/.streamlit/secrets.toml,
+eine datei mit API-Key angelgt werden.
+
+```bash
+[openai]
+openai_api_key = "sk -xxxxxxxxx"
+```
+
+
 ---
 ### Erstellt von Alexander Schmal für die Abgabe des Mobile Applikationen Moduls 

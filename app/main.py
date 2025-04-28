@@ -2,7 +2,7 @@ import streamlit as st
 from db import SessionLocal, add_zutat_to_vorrat, delete_vorratseintrag, add_rezept, delete_zutat_from_db
 import datetime
 import llm_import
-import openai
+from openai import OpenAI
 import requests
 import easyocr
 import numpy as np
@@ -466,10 +466,6 @@ with tab4:
     db.close()
 
 with tab5:
-    from db import SessionLocal
-    import llm_import
-    import openai
-
     st.subheader("📥 Rezept-Import")
 
     option = st.radio(
@@ -482,11 +478,8 @@ with tab5:
     if option == "📷 Bild hochladen":
         bild = st.file_uploader("Lade ein Bild hoch", type=["jpg", "jpeg", "png"])
         if bild:
-            import easyocr
-            import numpy as np
-            from PIL import Image
-
             st.image(bild, caption="Hochgeladenes Bild", use_column_width=True)
+
             img = Image.open(bild)
             img_array = np.array(img)
 
@@ -500,8 +493,6 @@ with tab5:
     elif option == "🌐 Webseite angeben":
         url = st.text_input("Gib die URL einer Rezept-Webseite ein")
         if url:
-            import requests
-            from bs4 import BeautifulSoup
             try:
                 st.info(f"🔗 Webseite wird geladen: {url}")
                 page = requests.get(url, timeout=10)
@@ -516,15 +507,11 @@ with tab5:
         if st.button("🤖 Rezept aus Text extrahieren"):
             with st.spinner("🧠 LLM wird kontaktiert..."):
                 try:
-                    openai.api_key = st.secrets["openai_api_key"]
-                    llm_import.openai.api_key = openai.api_key
-
                     rezept_daten = llm_import.rezept_aus_text_extrahieren(extrahierter_text)
 
                     st.success("🎉 Text erfolgreich extrahiert!")
 
                     st.markdown("---")
-                    # 🧾 Rezept-Dashboard anzeigen
                     with st.expander("🧾 Importiertes Rezept ansehen", expanded=True):
                         st.subheader(rezept_daten["name"])
 
@@ -538,22 +525,21 @@ with tab5:
                     st.markdown("---")
                     st.subheader("✏️ Nachbearbeiten (optional)")
 
-                    # Bearbeitbare Felder
-                    rezeptname = st.text_input("Rezeptname", value=rezept_daten["name"])
-                    beschreibung = st.text_area("Beschreibung", value=rezept_daten["beschreibung"])
+                    rezeptname = st.text_input("Rezeptname", value=rezept_daten["name"], key="rezeptname_input")
+                    beschreibung = st.text_area("Beschreibung", value=rezept_daten["beschreibung"], key="beschreibung_input")
 
-                    zutaten_liste = rezept_daten["zutaten"]
                     edited_zutaten = []
                     st.markdown("### 🛒 Zutaten bearbeiten")
-                    for i, z in enumerate(zutaten_liste):
+                    for i, z in enumerate(rezept_daten["zutaten"]):
                         col1, col2 = st.columns([3, 1])
-                        name = col1.text_input(f"Zutat {i+1} Name", value=z["name"], key=f"edit_name_{i}")
-                        menge = col2.number_input(f"Menge {i+1}", value=z["menge"], min_value=0.0, step=1.0, key=f"edit_menge_{i}")
+                        key_suffix = f"{i}"
+                        name = col1.text_input(f"Zutat {i+1} Name", value=z["name"], key=f"edit_name_{key_suffix}")
+                        menge = col2.number_input(f"Menge {i+1}", value=z["menge"], min_value=0.0, step=1.0, key=f"edit_menge_{key_suffix}")
                         edited_zutaten.append({"name": name, "menge": menge})
 
                     if st.button("✅ Bearbeitete Version speichern"):
+                        db = SessionLocal()
                         try:
-                            db = SessionLocal()
                             neues_rezept = {
                                 "name": rezeptname,
                                 "beschreibung": beschreibung,
@@ -561,12 +547,13 @@ with tab5:
                             }
 
                             llm_import.rezept_speichern(db, neues_rezept)
-
-                            st.success(f"🎉 Bearbeitetes Rezept '{rezeptname}' erfolgreich gespeichert!")
-                            db.close()
+                            st.success(f"🎉 Rezept '{rezeptname}' erfolgreich gespeichert!")
                             st.rerun()
+
                         except Exception as e:
                             st.error(f"❌ Fehler beim Speichern: {e}")
+                        finally:
+                            db.close()
 
                     st.markdown("---")
                     if st.button("📖 Importiertes Rezept in Übersicht anzeigen"):
@@ -574,7 +561,7 @@ with tab5:
                         st.rerun()
 
                 except Exception as e:
-                    st.error(f"❌ Fehler: {e}")
+                    st.error(f"❌ Fehler beim LLM-Import: {e}")
 
 
 # 🔹 UI für Timer / Kochmodus

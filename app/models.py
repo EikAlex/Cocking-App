@@ -39,7 +39,7 @@ class Zutat(Base):
     __tablename__ = "zutaten"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
-    einheit = Column(String)
+    einheit = Column(String, nullable=False)
 
     vorrat = relationship("Vorrat", back_populates="zutat")
     rezept_zutaten = relationship("RezeptZutat", back_populates="zutat")

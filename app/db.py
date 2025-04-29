@@ -26,8 +26,8 @@ def add_zutat_to_vorrat(db, name, einheit, menge, haltbar_bis, mindestbestand):
         zutat = Zutat(name=name, einheit=einheit)
         db.add(zutat)
         db.commit()  # Sicherstellen, dass Zutat gespeichert wird
-        db.refresh(zutat)
-
+        zutat = db.query(Zutat).filter(Zutat.name == name).first()
+        st.write(zutat.einheit)
     # Prüfen, ob bereits ein Vorratseintrag für diese Zutat und dieses Haltbarkeitsdatum existiert
     vorratseintrag = db.query(Vorrat).filter(
         Vorrat.zutat_id == zutat.id, Vorrat.haltbar_bis == haltbar_bis
@@ -81,7 +81,7 @@ def delete_zutat_from_db(db, zutat_name):
 #         rz = RezeptZutat(rezept_id=rezept.id, zutat_id=zutat_id, menge=menge)
 #         db.add(rz)
 
-    db.commit()
+#    db.commit()
 def add_rezept(db, name, beschreibung, zutaten_liste):
     # Neues Rezept erstellen
     rezept = Rezept(name=name, beschreibung=beschreibung)

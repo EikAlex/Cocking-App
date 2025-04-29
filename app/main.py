@@ -61,9 +61,17 @@ with tab1:
             vorhandene_einheiten = db.query(Zutat.einheit).distinct().all()
             einheiten_liste = [e[0] for e in vorhandene_einheiten if e[0]] or [
                 "Stück", "g", "ml"]
-
+            einheit_von_zutat = None
+            if vorschlag:
+                zutat_obj = db.query(Zutat).filter(Zutat.name == vorschlag).first()
+                if zutat_obj:
+                    einheit_von_zutat = zutat_obj.einheit
             einheit = st.selectbox(
-                "Einheit", options=einheiten_liste, key="einheit_input")
+                        "Einheit",
+                        options=einheiten_liste,
+                        index=einheiten_liste.index(einheit_von_zutat) if einheit_von_zutat in einheiten_liste else 0,
+                        key="einheit_input"
+                    )
             menge = st.number_input(
                 "Menge", min_value=1, step=1, key="menge_input")
             haltbar_bis = st.date_input(
@@ -90,7 +98,6 @@ with tab1:
                         haltbar_bis,
                         mindestbestand if mindestbestand > 0 else None
                     )
-                    st.success(f"✅ {name} wurde zum Vorrat hinzugefügt!")
                 except Exception as e:
                     st.error(f"❌ Fehler beim Hinzufügen: {e}")
             else:
@@ -99,18 +106,9 @@ with tab1:
                     if mindestbestand > 0:
                         existiert_bereits.mindestbestand = mindestbestand
                     db.commit()
-                    st.success(
-                        f"✅ Menge von {name} wurde im Vorrat aktualisiert!")
                 except Exception as e:
                     st.error(f"❌ Fehler beim Aktualisieren des Vorrats: {e}")
 
-            # 🧹 Nach dem Hinzufügen: Alle Eingabefelder zurücksetzen
-            st.session_state["vorschlag"] = ""
-            st.session_state["zutat_input"] = ""
-            st.session_state["einheit_input"] = einheiten_liste[0] if einheiten_liste else ""
-            st.session_state["menge_input"] = 1
-            st.session_state["mhd_input"] = datetime.date.today()
-            st.session_state["mb_input"] = 0
 
     elif action == "Zutat löschen":
         # Zutat aus der Datenbank löschen falls man sich vertippt hat oder sie nicht mehr benötigt wird
@@ -368,7 +366,6 @@ with tab3:
                 st.write(f"- {benoetigte_menge} {rz.zutat.einheit} {rz.zutat.name}"
                          f" --  (🧺 Vorrat: {vorhandene_menge} {rz.zutat.einheit})")
 
-# TODO: UI für Einkaufsliste, Timer und Essensplaner
 # 🔹 UI für Einkaufsliste
 with tab4:
     db = SessionLocal()
@@ -429,31 +426,30 @@ with tab4:
             col1.write(f"**{zutat.name}**")
 
             key_input = f"menge_input_{eintrag.id}"
-            if key_input not in st.session_state:
-                st.session_state[key_input] = int(eintrag.menge)
 
             neue_menge = col2.number_input(
                 "",
                 min_value=0,
                 step=1,
-                value=st.session_state[key_input],
-                key=key_input,
+                value=int(eintrag.menge),  # Initialer Standardwert
+                key=key_input,             # Verknüpfung mit Session State
                 label_visibility="collapsed"
             )
 
             if col3.button("💾", key=f"save_{eintrag.id}"):
+                # Verwenden Sie den aktuellen Wert des Widgets aus diesem Durchlauf
                 eintrag.menge = neue_menge
                 db.commit()
                 st.success(f"Menge von '{zutat.name}' aktualisiert!")
                 st.rerun()
-            
+
             #TODO: button noch bearbeiten mit funktion
             if col4.button("🛍️", key=f"bought_{eintrag.id}"):
                 db.delete(eintrag)
                 db.commit()
                 st.success(f"'{zutat.name}' als gekauft markiert.")
                 st.rerun()
-                
+
             if col5.button("❌", key=f"remove_{eintrag.id}"):
                 db.delete(eintrag)
                 db.commit()
